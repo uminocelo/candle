@@ -1,0 +1,12 @@
+<resources>
+    <!-- The HY300 screen is about 957 x 538 dp (1280 x 720 at density 214). -->
+    <dimen name="screen_padding_horizontal">40dp</dimen>
+    <dimen name="screen_padding_vertical">20dp</dimen>
+    <dimen name="tile_width">170dp</dimen>
+    <dimen name="tile_height">96dp</dimen>
+    <dimen name="tile_gap">14dp</dimen>
+    <dimen name="tile_icon">40dp</dimen>
+    <dimen name="section_gap">14dp</dimen>
+    <dimen name="tile_focus_stroke">3dp</dimen>
+    <dimen name="remote_qr">160dp</dimen>
+</resources>

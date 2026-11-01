@@ -1,0 +1,87 @@
+# A v* tag (v1.2.3, or v1.2.3-rc1 for a pre-release) builds both apps, signs them with the
+# release key from the repository secrets (CANDLE_SIGNING_KEYSTORE_BASE64, CANDLE_SIGNING_STORE_PASSWORD,
+# CANDLE_SIGNING_KEY_PASSWORD), and publishes them with SHA256SUMS as a GitHub Release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  # The release certificate (public); an APK signed with any other key is not published.
+  RELEASE_CERT_SHA256: 4844aa066e27540cfe6e3887319f162edec33af9efe1cf1eac42b5b79c8079ef
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+
+      - name: Unpack the release key
+        env:
+          CANDLE_SIGNING_KEYSTORE_BASE64: ${{ secrets.CANDLE_SIGNING_KEYSTORE_BASE64 }}
+          CANDLE_SIGNING_STORE_PASSWORD: ${{ secrets.CANDLE_SIGNING_STORE_PASSWORD }}
+          CANDLE_SIGNING_KEY_PASSWORD: ${{ secrets.CANDLE_SIGNING_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in CANDLE_SIGNING_KEYSTORE_BASE64 CANDLE_SIGNING_STORE_PASSWORD CANDLE_SIGNING_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The $name secret is not set or is empty"
+              missing=1
+            fi
+          done
+          [ "$missing" = 0 ] || exit 1
+          printf '%s' "$CANDLE_SIGNING_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Build the signed APKs
+        env:
+          CANDLE_SIGNING_STORE_FILE: ${{ runner.temp }}/release.jks
+          CANDLE_SIGNING_STORE_PASSWORD: ${{ secrets.CANDLE_SIGNING_STORE_PASSWORD }}
+          CANDLE_SIGNING_KEY_ALIAS: candle  # not secret; a secret would hide every "candle" in the logs
+          CANDLE_SIGNING_KEY_PASSWORD: ${{ secrets.CANDLE_SIGNING_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease -PcandleVersion="$GITHUB_REF_NAME"
+
+      - name: Remove the release key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Name, check and checksum the APKs
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/candle-$version.apk"
+          cp server/build/outputs/apk/release/server-release.apk "dist/candle-server-$version.apk"
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+          echo "apksigner: $apksigner"
+          for apk in dist/*.apk; do
+            out="$("$apksigner" verify --print-certs "$apk" 2>&1)" || { echo "$out"; echo "::error::$apk does not verify"; exit 1; }
+            # Every signer line (the wording differs between apksigner versions) must name the release certificate.
+            digests="$(printf '%s\n' "$out" | sed -n 's/.*certificate SHA-256 digest: *//p' | sort -u)"
+            if [ "$digests" != "$RELEASE_CERT_SHA256" ]; then
+              echo "$out"
+              echo "::error::$apk is not signed with the release certificate only"
+              exit 1
+            fi
+            echo "$apk: signed with the release certificate"
+          done
+          (cd dist && sha256sum *.apk > SHA256SUMS && cat SHA256SUMS)
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          case "$GITHUB_REF_NAME" in *-rc*) flags+=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes \
+            --title "Candle ${GITHUB_REF_NAME#v}" "${flags[@]}"

@@ -1,0 +1,31 @@
+[versions]
+agp = "8.7.3"
+kotlin = "2.0.21"
+junit = "4.13.2"
+# SMB2/3 client for network shares.
+smbj = "0.15.0"
+media3 = "1.9.0"
+# Jellyfin's prebuilt Media3 FFmpeg audio decoder; its version tracks media3.
+jellyfin-ffmpeg = "1.9.0+1"
+# QR code for the phone remote's address; only the encoder is used.
+zxing = "3.5.3"
+androidx-test-core = "1.6.1"
+androidx-test-runner = "1.6.2"
+androidx-test-ext-junit = "1.2.1"
+
+[libraries]
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
+jellyfin-ffmpeg-decoder = { module = "org.jellyfin.media3:media3-ffmpeg-decoder", version.ref = "jellyfin-ffmpeg" }
+junit = { module = "junit:junit", version.ref = "junit" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+smbj = { module = "com.hierynomus:smbj", version.ref = "smbj" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

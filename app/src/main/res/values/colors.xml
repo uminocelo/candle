@@ -1,0 +1,8 @@
+<resources>
+    <color name="background">#FF14110F</color>
+    <color name="tile">#FF2A2420</color>
+    <color name="tile_focused">#FF3A312A</color>
+    <color name="flame">#FFF2A93B</color>
+    <color name="text">#FFF4EDE4</color>
+    <color name="text_muted">#FFB3A99D</color>
+</resources>

@@ -1,0 +1,12 @@
+# Phase 2, group B: not needed on a projector. Audited 2026-10-28.
+# Format: package  # what it is; install location; PSS when audited; restore
+# All are on /system or /product, so restore.sh brings them back. Removed 2026-10-29; smoke check passed.
+com.android.camera2                       # Camera (no camera); /product/app; not running; restorable
+com.android.soundrecorder                 # Sound recorder; /system/app; not running; restorable
+com.android.egg                           # Android easter egg; /system/app; not running; restorable
+com.android.dreams.web                    # web screensaver; /system/app; not running; restorable
+com.android.bips                          # built-in print service; /system/priv-app; not running; restorable
+com.android.printspooler                  # print spooler; /system/app; not running; restorable
+com.android.printservice.recommendation   # print service suggestions; /system/app; not running; restorable
+com.google.android.landscape              # landscape live wallpaper; /system/app; not running; restorable
+com.android.chrome                        # Chrome 90; /product/app; not running; restorable. NOTE: the only app that opens http links; WebView (com.android.webview) is separate and stays

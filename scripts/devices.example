@@ -1,0 +1,9 @@
+# Copy to scripts/devices.local (git-ignored) and fill in your devices' adb serials.
+# Environment variables of the same name win over this file.
+
+# The projector, over network debugging: its IP and port 5555.
+ADB_SERIAL=192.0.2.10:5555
+
+# The phone running Candle Server, over wireless debugging: its name from `adb mdns services`
+# (it keeps working when the port changes), or IP:port.
+SERVER_SERIAL=adb-XXXXXXXXXXXX-xxxxxx._adb-tls-connect._tcp

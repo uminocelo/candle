@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110F">
+<title>Candle Server</title>
+<!-- Home-screen app: manifest for Android, apple-* tags for iPhone. -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Candle Server">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root {
+    --bg: #14110f;
+    --tile: #2a2420;
+    --tile-press: #3a312a;
+    --flame: #f2a93b;
+    --text: #f4ede4;
+    --muted: #b3a99d;
+    --line: #3a312a;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    max-width: 720px; margin: 0 auto;
+  }
+  h1 { font-size: 22px; margin: 0; color: var(--flame); letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  header h1 { flex: 1; min-width: 0; }
+  button, .button {
+    font: inherit; color: var(--text); background: var(--tile); border: 0; text-decoration: none;
+    border-radius: 12px; cursor: pointer; touch-action: manipulation; padding: 8px 14px;
+  }
+  button:active, .button:active { background: var(--tile-press); }
+  button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+  button.primary { background: var(--flame); color: var(--bg); font-weight: 600; }
+  button.icon { padding: 8px; display: grid; place-items: center; background: transparent; color: var(--muted); }
+  svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  [hidden] { display: none !important; }
+  input[type=search], input[type=password] {
+    font: inherit; width: 100%; color: var(--text); background: var(--tile); border: 0; border-radius: 12px; padding: 10px 14px;
+  }
+  input::placeholder { color: var(--muted); }
+
+  .crumbs { display: flex; flex-wrap: wrap; gap: 2px 6px; margin: 12px 0; color: var(--muted); font-size: 14px; }
+  .crumbs a { color: var(--muted); text-decoration: none; }
+  .crumbs a:last-child { color: var(--text); }
+  .crumbs span { opacity: .5; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; margin-bottom: 12px; }
+  .grid button { padding: 0; aspect-ratio: 1; overflow: hidden; border-radius: 10px; }
+  .grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+  .list .open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 0; background: transparent; border-radius: 0; text-align: left; }
+  .list .thumb { width: 56px; height: 42px; border-radius: 8px; background: var(--tile); display: grid; place-items: center; overflow: hidden; color: var(--flame); flex: none; }
+  .list .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .list .text { min-width: 0; }
+  .list .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list .meta { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty, .note { color: var(--muted); text-align: center; padding: 32px 0; }
+  .more { display: block; margin: 16px auto; }
+
+  .overlay { position: fixed; inset: 0; background: #000; z-index: 10; display: flex; flex-direction: column; }
+  .overlay .bar { display: flex; align-items: center; gap: 8px; padding: max(8px, env(safe-area-inset-top)) 8px 8px; background: rgba(0,0,0,.6); }
+  .overlay .bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .overlay .stage { flex: 1; min-height: 0; display: grid; place-items: center; position: relative; touch-action: pan-y; }
+  .overlay video, .overlay img { max-width: 100%; max-height: 100%; }
+  .overlay audio { width: min(100% - 32px, 480px); }
+  .overlay .nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,.4); }
+  .overlay .prev { left: 8px; } .overlay .next { right: 8px; }
+
+  .panel { background: var(--tile); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  .panel h2 { font-size: 17px; margin: 0 0 8px; }
+  .upload-row { font-size: 14px; margin-top: 10px; }
+  .upload-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .progress div { height: 100%; width: 0; background: var(--flame); }
+  .upload-row.done .progress div { background: #7fb069; }
+  .upload-row.failed { color: #e07a5f; }
+
+  .login { max-width: 360px; margin: 15vh auto 0; text-align: center; }
+  .login p { color: var(--muted); }
+  .login form { display: grid; gap: 12px; }
+  .error { color: #e07a5f; min-height: 1.4em; }
+  .toast {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--tile-press); padding: 10px 16px; border-radius: 12px; z-index: 20; max-width: calc(100% - 32px);
+  }
+</style>
+</head>
+<body>
+<svg hidden>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></symbol>
+  <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-document" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+</svg>
+
+<section id="login" class="login" hidden>
+  <h1 data-name>Candle Server</h1>
+  <p id="login-why">Enter the password set on the phone.</p>
+  <form id="login-form">
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
+    <button class="primary" type="submit">Log in</button>
+    <div id="login-error" class="error" role="alert"></div>
+  </form>
+  <button id="login-cancel" type="button" hidden>Back to the library</button>
+</section>
+
+<section id="app" hidden>
+  <header>
+    <h1 data-name>Candle Server</h1>
+    <button id="upload-open" class="icon" aria-label="Upload files" hidden><svg><use href="#i-upload"/></svg></button>
+    <button id="login-open" class="icon" aria-label="Log in" hidden><svg><use href="#i-lock"/></svg></button>
+    <button id="logout" hidden>Log out</button>
+  </header>
+
+  <section id="upload" class="panel" hidden>
+    <h2>Send files to the phone</h2>
+    <div id="upload-where" class="note" style="padding:0;text-align:left"></div>
+    <p><button id="upload-pick" class="primary">Choose files</button> <button id="upload-close">Close</button></p>
+    <p id="upload-done" hidden><button id="upload-show"></button></p>
+    <input id="upload-input" type="file" multiple hidden>
+    <div id="upload-list"></div>
+  </section>
+
+  <input id="search" type="search" placeholder="Search by name" aria-label="Search by name" autocomplete="off">
+  <nav id="crumbs" class="crumbs" aria-label="Folders"></nav>
+  <div id="grid" class="grid"></div>
+  <ul id="list" class="list"></ul>
+  <div id="empty" class="empty" hidden></div>
+  <button id="more" class="more" hidden>Show more</button>
+</section>
+
+<div id="viewer" class="overlay" hidden>
+  <div class="bar">
+    <button id="viewer-close" class="icon" aria-label="Close"><svg><use href="#i-close"/></svg></button>
+    <div id="viewer-title" class="title"></div>
+    <a id="viewer-download" class="button icon" aria-label="Download"><svg><use href="#i-download"/></svg></a>
+  </div>
+  <div id="stage" class="stage"></div>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const PAGE = 100;
+let session = null;
+let view = null; // { path } or { q }, with the items loaded so far
+let loading = false;
+
+// ---- API
+class HttpError extends Error {
+  constructor(status, body) { super(body.error || "HTTP " + status); this.status = status; this.body = body; }
+}
+async function api(method, url, form) {
+  const response = await fetch(url, {
+    method, credentials: "same-origin",
+    headers: form ? { "Content-Type": "application/x-www-form-urlencoded" } : {},
+    body: form ? new URLSearchParams(form) : undefined,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new HttpError(response.status, body);
+  return body;
+}
+const encodePath = (path) => path.split("/").map(encodeURIComponent).join("/");
+const fileUrl = (item) => "/files/" + encodePath(item.path);
+const downloadUrl = (item) => fileUrl(item) + "?download=1";
+const thumbUrl = (item) => "/thumbs/" + encodePath(item.path);
+
+let toastTimer = 0;
+function toast(text) {
+  const el = $("toast");
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (el.hidden = true), 3500);
+}
+function fail(error) {
+  if (error instanceof HttpError && error.status === 401) return start(); // logged out meanwhile
+  toast(error.message === "Failed to fetch" ? "The phone is not answering." : error.message);
+}
+
+// ---- small DOM helpers: text always goes in as text, never as HTML
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  for (const child of children) node.append(child);
+  return node;
+}
+function icon(name) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  use.setAttribute("href", "#i-" + name);
+  svg.append(use);
+  return svg;
+}
+function size(bytes) {
+  if (bytes == null) return "";
+  const units = ["B", "KB", "MB", "GB"];
+  let n = bytes, u = 0;
+  while (n >= 1024 && u < units.length - 1) { n /= 1024; u++; }
+  return (u === 0 ? n : n.toFixed(n < 10 ? 1 : 0)) + " " + units[u];
+}
+
+// ---- start: the session decides between the login screen and the library
+async function start() {
+  try {
+    session = await api("GET", "/api/session");
+  } catch (e) {
+    return toast("The phone is not answering.");
+  }
+  document.querySelectorAll("[data-name]").forEach((h) => (h.textContent = session.name));
+  document.title = session.name;
+  if (!session.canBrowse) return showLogin(false);
+  showApp();
+}
+
+function showLogin(optional) {
+  $("app").hidden = true;
+  $("login").hidden = false;
+  $("login-cancel").hidden = !optional;
+  $("login-why").textContent = optional ? "Log in to send files to the phone." : "This library is private. Enter the password set on the phone.";
+  $("login-error").textContent = "";
+  $("password").value = "";
+  $("password").focus();
+}
+
+$("login-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const error = $("login-error");
+  error.textContent = "";
+  try {
+    await api("POST", "/api/login", { password: $("password").value });
+    $("password").value = "";
+    await start();
+  } catch (e) {
+    if (!(e instanceof HttpError)) return (error.textContent = "The phone is not answering.");
+    if (e.status === 429) error.textContent = `Too many tries. Wait ${Math.ceil(e.body.retryAfter / 60)} minutes.`;
+    else if (e.status === 401) error.textContent = `Wrong password. ${e.body.triesLeft} ${e.body.triesLeft === 1 ? "try" : "tries"} left.`;
+    else error.textContent = e.message;
+  }
+});
+$("login-cancel").addEventListener("click", showApp);
+$("login-open").addEventListener("click", () => showLogin(true));
+$("logout").addEventListener("click", () => api("POST", "/api/logout").then(start, fail));
+
+function showApp() {
+  $("login").hidden = true;
+  $("app").hidden = false;
+  $("upload-open").hidden = !session.canUpload;
+  $("logout").hidden = !session.loggedIn;
+  // Public mode: browsing is open, logging in is only needed for uploads.
+  $("login-open").hidden = session.loggedIn || !session.passwordSet;
+  route();
+}
+
+// ---- browsing: #/Movies/Series, or #?q=holiday for a search
+function route() {
+  const hash = location.hash.slice(1);
+  if (hash.startsWith("?q=")) {
+    const q = decodeURIComponent(hash.slice(3));
+    $("search").value = q;
+    load({ q });
+  } else {
+    const path = hash.replace(/^\/?/, "").split("/").filter(Boolean).map(decodeURIComponent).join("/");
+    if (document.activeElement !== $("search")) $("search").value = "";
+    load({ path });
+  }
+}
+window.addEventListener("hashchange", () => { if (!$("app").hidden) route(); });
+
+function go(path) { location.hash = "/" + encodePath(path); }
+
+async function load(target, more = false) {
+  if (loading) return;
+  loading = true;
+  try {
+    const offset = more ? view.items.length : 0;
+    const url = target.q != null
+      ? `/api/search?q=${encodeURIComponent(target.q)}&offset=${offset}&limit=${PAGE}`
+      : `/api/list?path=${encodeURIComponent(target.path)}&offset=${offset}&limit=${PAGE}`;
+    const page = await api("GET", url);
+    if (!more) view = { ...target, items: [], total: 0 };
+    view.items.push(...page.items);
+    view.total = page.total;
+    render(more ? page.items : view.items, !more);
+  } catch (e) {
+    if (e instanceof HttpError && e.status === 404) {
+      toast("That folder is not shared any more.");
+      if (target.path) go("");
+    } else if (e instanceof HttpError && e.status === 400 && target.q != null) {
+      clear();
+      showEmpty(e.message);
+    } else fail(e);
+  } finally {
+    loading = false;
+  }
+}
+
+function clear() {
+  $("grid").replaceChildren();
+  $("list").replaceChildren();
+  $("more").hidden = true;
+  $("empty").hidden = true;
+}
+function showEmpty(text) {
+  $("empty").textContent = text;
+  $("empty").hidden = false;
+}
+
+function render(items, fresh) {
+  if (fresh) {
+    clear();
+    crumbs();
+    showUploadFolder(); // the panel may stay open while moving between folders
+    window.scrollTo(0, 0);
+  }
+  for (const item of items) {
+    // In a folder, photos show as a grid; in a search they are rows like the rest.
+    if (item.kind === "image" && view.q == null) $("grid").append(tile(item));
+    else $("list").append(row(item));
+  }
+  $("more").hidden = view.items.length >= view.total;
+  if (view.items.length === 0) showEmpty(view.q != null ? "Nothing found." : view.path ? "This folder is empty." : "No folders are shared. Choose some on the phone.");
+}
+
+function crumbs() {
+  const nav = $("crumbs");
+  nav.replaceChildren();
+  if (view.q != null) return nav.append(el("a", { href: "#/" }, "All folders"), el("span", {}, "›"), el("a", {}, `Search: ${view.q}`));
+  nav.append(el("a", { href: "#/" }, "All folders"));
+  const parts = view.path ? view.path.split("/") : [];
+  parts.forEach((part, i) => nav.append(el("span", {}, "›"), el("a", { href: "#/" + encodePath(parts.slice(0, i + 1).join("/")) }, part)));
+}
+
+function tile(item) {
+  return el("button", { "aria-label": item.name, onclick: () => open(item) },
+    el("img", { src: thumbUrl(item), alt: "", loading: "lazy" }));
+}
+
+function row(item) {
+  const thumb = el("span", { class: "thumb" });
+  if (item.thumb) {
+    const img = el("img", { src: thumbUrl(item), alt: "", loading: "lazy" });
+    img.addEventListener("error", () => thumb.replaceChildren(icon(item.kind)));
+    thumb.append(img);
+  } else thumb.append(icon(item.kind));
+  // In a search, every result also says where it is: several folders can share a name.
+  const where = view.q != null ? item.path.split("/").slice(0, -1).join(" › ") : "";
+  const meta = [item.kind === "folder" ? `${item.count} ${item.count === 1 ? "item" : "items"}` : size(item.size), where].filter(Boolean).join(" · ");
+  const li = el("li", {},
+    el("button", { class: "open", onclick: () => open(item) },
+      thumb, el("span", { class: "text" }, el("div", { class: "name" }, item.name), el("div", { class: "meta" }, meta))));
+  if (item.kind !== "folder") {
+    li.append(el("a", { class: "button icon", href: downloadUrl(item), download: item.name, "aria-label": "Download " + item.name }, icon("download")));
+  }
+  return li;
+}
+
+$("more").addEventListener("click", () => load(view, true));
+// Big folders: the next page loads as the end comes into view.
+new IntersectionObserver((entries) => {
+  if (entries.some((e) => e.isIntersecting) && !$("more").hidden) load(view, true);
+}, { rootMargin: "400px" }).observe($("more"));
+
+let searchTimer = 0;
+$("search").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  const q = $("search").value.trim();
+  searchTimer = setTimeout(() => {
+    if (q.length >= 2) location.hash = "?q=" + encodeURIComponent(q);
+    else if (q.length === 0 && view && view.q != null) go("");
+  }, 300);
+});
+
+// ---- opening files
+function open(item) {
+  switch (item.kind) {
+    case "folder": return go(item.path);
+    case "video": return play(item, "video");
+    case "audio": return play(item, "audio");
+    case "image": return showPhoto(item);
+    default:
+      // PDFs open in the browser's own viewer (or the phone's PDF app); other documents download.
+      if (item.mime === "application/pdf" || item.mime.startsWith("text/")) window.open(fileUrl(item), "_blank");
+      else location.href = downloadUrl(item);
+  }
+}
+
+function openViewer(item, media) {
+  $("viewer-title").textContent = item.name;
+  $("viewer-download").href = downloadUrl(item);
+  $("viewer-download").setAttribute("download", item.name);
+  // A fresh stage each time, so listeners from the last photo or film do not pile up.
+  const stage = el("div", { id: "stage", class: "stage" }, ...media);
+  $("stage").replaceWith(stage);
+  $("viewer").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+function closeViewer() {
+  $("stage").querySelectorAll("video, audio").forEach((m) => { m.pause(); m.removeAttribute("src"); m.load(); });
+  $("stage").replaceChildren();
+  $("viewer").hidden = true;
+  document.body.style.overflow = "";
+}
+$("viewer-close").addEventListener("click", closeViewer);
+document.addEventListener("keydown", (e) => {
+  if ($("viewer").hidden) return;
+  if (e.key === "Escape") closeViewer();
+  if (e.key === "ArrowLeft") $("stage").dispatchEvent(new CustomEvent("step", { detail: -1 }));
+  if (e.key === "ArrowRight") $("stage").dispatchEvent(new CustomEvent("step", { detail: 1 }));
+});
+
+function play(item, kind) {
+  const media = el(kind, { src: fileUrl(item), controls: "", autoplay: "", playsinline: "", preload: "metadata" });
+  media.addEventListener("error", () => toast("This browser cannot play this file. Try Candle on the projector, or download it."));
+  openViewer(item, [media]);
+}
+
+function showPhoto(item) {
+  const photos = view.items.filter((i) => i.kind === "image");
+  let index = photos.findIndex((p) => p.path === item.path);
+  const img = el("img", { alt: "" });
+  const prev = el("button", { class: "icon nav prev", "aria-label": "Previous photo", onclick: () => step(-1) }, icon("left"));
+  const next = el("button", { class: "icon nav next", "aria-label": "Next photo", onclick: () => step(1) }, icon("right"));
+  function show() {
+    const photo = photos[index];
+    img.src = fileUrl(photo);
+    $("viewer-title").textContent = photo.name;
+    $("viewer-download").href = downloadUrl(photo);
+    $("viewer-download").setAttribute("download", photo.name);
+    prev.hidden = index === 0;
+    next.hidden = index === photos.length - 1;
+  }
+  function step(by) {
+    index = Math.min(photos.length - 1, Math.max(0, index + by));
+    show();
+  }
+  openViewer(item, [img, prev, next]);
+  show();
+  const stage = $("stage");
+  stage.addEventListener("step", (e) => step(e.detail));
+  let startX = null;
+  stage.addEventListener("touchstart", (e) => (startX = e.touches[0].clientX), { passive: true });
+  stage.addEventListener("touchend", (e) => {
+    if (startX == null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+    startX = null;
+  });
+}
+
+// ---- uploads: one file at a time, each with its own progress bar
+// Uploads go into the folder that is open; from the top level or a search, into "Candle Uploads".
+const UPLOADS = "Candle Uploads";
+const uploadFolder = () => (view && view.q == null && view.path ? view.path : "");
+const folderName = (path) => (path || UPLOADS).split("/").pop();
+function showUploadFolder() {
+  const folder = uploadFolder();
+  $("upload-where").textContent = folder
+    ? `They go to this folder, “${folderName(folder)}”.`
+    : `Open a folder first to send files there. From here they go to “${UPLOADS}”.`;
+}
+$("upload-open").addEventListener("click", () => {
+  showUploadFolder();
+  $("upload-done").hidden = true;
+  $("upload").hidden = false;
+});
+$("upload-close").addEventListener("click", () => { $("upload").hidden = true; });
+$("upload-pick").addEventListener("click", () => $("upload-input").click());
+let lastUploadFolder = UPLOADS;
+$("upload-show").addEventListener("click", () => {
+  $("upload").hidden = true;
+  if (view && view.q == null && view.path === lastUploadFolder) load(view);
+  else go(lastUploadFolder);
+});
+$("upload-input").addEventListener("change", async () => {
+  const files = [...$("upload-input").files];
+  $("upload-input").value = "";
+  const folder = uploadFolder();
+  const rows = files.map((file) => {
+    const bar = el("div");
+    const status = el("div", { class: "meta" }, `${size(file.size)} · waiting`);
+    const row = el("div", { class: "upload-row" }, el("div", { class: "name" }, file.name), status, el("div", { class: "progress" }, bar));
+    $("upload-list").prepend(row);
+    return { file, row, bar, status };
+  });
+  let sent = 0;
+  for (const r of rows) {
+    try {
+      const result = await send(r, folder);
+      r.row.classList.add("done");
+      lastUploadFolder = result.folder;
+      const where = folderName(result.folder);
+      r.status.textContent = result.name === r.file.name ? `Saved in ${where}` : `Saved in ${where} as ${result.name}`;
+      sent++;
+    } catch (e) {
+      r.row.classList.add("failed");
+      r.status.textContent = e.message;
+      if (e instanceof HttpError && e.status === 401) { await start(); break; }
+    }
+  }
+  if (sent > 0) {
+    $("upload-show").textContent = `Open ${folderName(lastUploadFolder)}`;
+    $("upload-done").hidden = false;
+    if (view && view.q == null && view.path === lastUploadFolder) load(view);
+  }
+});
+
+function send({ file, bar, status }, folder) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload?name=" + encodeURIComponent(file.name) + "&folder=" + encodeURIComponent(folder));
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      bar.style.width = (100 * e.loaded / e.total).toFixed(1) + "%";
+      status.textContent = `${size(e.loaded)} of ${size(e.total)}`;
+    };
+    xhr.onload = () => {
+      let body = {};
+      try { body = JSON.parse(xhr.responseText); } catch (_) {}
+      if (xhr.status === 200) resolve(body);
+      else reject(new HttpError(xhr.status, body));
+    };
+    xhr.onerror = () => reject(new Error("The upload stopped. Check the Wi-Fi and try again."));
+    status.textContent = "Sending…";
+    xhr.send(file);
+  });
+}
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+start();
+</script>
+</body>
+</html>

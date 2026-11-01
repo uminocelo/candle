@@ -1,0 +1,13 @@
+<resources>
+    <style name="Theme.Server" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:colorAccent">@color/flame</item>
+        <!-- One UI otherwise draws an "on" switch and ticked boxes in dark grey. -->
+        <item name="android:colorControlActivated">@color/flame</item>
+        <item name="android:colorControlNormal">@color/text_muted</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_muted</item>
+    </style>
+</resources>

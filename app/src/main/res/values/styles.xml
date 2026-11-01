@@ -1,0 +1,22 @@
+<resources>
+    <style name="SectionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <!-- Tiles grow by 8% when focused; padding keeps them from being clipped. -->
+    <style name="TileRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:clipChildren">false</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:scrollbars">none</item>
+    </style>
+</resources>

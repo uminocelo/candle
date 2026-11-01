@@ -1,0 +1,13 @@
+# Phase 2, group C: vendor extras, factory tools and suspicious preinstalls.
+# Removed 2026-10-26; audited 2026-10-28.
+# Format: package  # what it is; install location; restore
+com.abc.ninja                    # "YTV", unknown origin; /system/app/YTV; restorable
+com.master.apps                  # JmApps vendor app hub; /system/app/JmApps; restorable
+com.fb                           # JMFactory factory app; /system/app/JMFactory; restorable
+com.overseas.store.appstore      # third-party app store; /product/app; restorable
+com.koushikdutta.superuser       # Superuser UI (the su binary stays on /system); /system/app/Superuser; restorable
+com.softwinner.agingdragonbox    # factory aging test; /system/app/DragonAgingTV; restorable
+com.softwinner.dragonatt         # factory test; /system/app/DragonAtt; restorable
+com.softwinner.dragonbox         # factory test; /system/app/DragonBox; restorable
+com.softwinner.awlogsettings     # vendor log settings; /system/app/AwlogSettings; restorable
+com.softwinner.tv.factorymenu    # factory menu; /data/app; PERMANENT (APK in backup/apks/)

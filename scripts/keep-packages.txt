@@ -1,0 +1,28 @@
+# Packages debloat.sh refuses to remove: the system needs them, the user keeps
+# them, or the projector hardware depends on them. A trailing .* matches a prefix.
+android
+com.android.systemui
+com.android.tv.settings                 # TV settings; also the last-resort home screen
+com.android.providers.*
+com.android.permissioncontroller
+com.android.webview                     # WebView provider (Chrome is not)
+com.android.externalstorage
+com.android.packageinstaller
+com.google.android.gms
+com.google.android.gsf
+com.android.vending                     # Play Store
+com.google.android.youtube.tv
+com.google.android.apps.mediashell      # Chromecast built-in, user keeps it
+com.google.android.leanback.ime         # the keyboard that stays
+com.softwinner.tcorrection              # keystone correction
+com.softwinner.awsource                 # HDMI input
+com.softwinner.awlivetv                 # HDMI picture (opened by awsource)
+com.softwinner.vis
+com.softwinner.awmanager
+com.softwinner.tvvolume
+com.softwinner.settingssetup
+com.softwinner.settingsassist
+com.softwinner.provision
+com.htc.htcsettings                     # projector picture, Bluetooth
+com.htc.htclauncherhighenglishd08       # fallback home screen (decided 2026-10-28)
+com.uminocelo.candle                    # Candle itself

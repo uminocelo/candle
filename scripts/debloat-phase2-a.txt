@@ -1,0 +1,10 @@
+# Phase 2, group A: apps Candle replaces. Audited 2026-10-28.
+# Format: package  # what it is; install location; PSS when audited; restore
+# All are on /system, so restore.sh brings them back. Removed 2026-10-29; smoke check passed.
+# The HTC launcher stays installed as the fallback home (keep-packages.txt).
+com.google.android.leanbacklauncher                  # stock Android TV launcher; /system/priv-app; not running; restorable
+com.google.android.leanbacklauncher.recommendations  # its recommendations service; /system/priv-app; not running; restorable
+com.android.gallery3d                                # Gallery; /system/app; not running; restorable
+com.android.music                                    # AOSP Music; /system/app; not running; restorable
+com.softwinner.TvdFileManager                        # Allwinner file manager (shared uid com.softwinner.Tvd); /system/priv-app; not running; restorable
+com.softwinner.TvdVideo                              # Allwinner video player (shared uid com.softwinner.Tvd); /system/app; not running; restorable

@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110F">
+<title>Candle remote</title>
+<!-- Home-screen app: manifest for Android, apple-* tags for iPhone. -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Candle">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root {
+    --bg: #14110f;
+    --tile: #2a2420;
+    --tile-press: #3a312a;
+    --flame: #f2a93b;
+    --text: #f4ede4;
+    --muted: #b3a99d;
+    --line: #3a312a;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    max-width: 480px; margin: 0 auto; user-select: none;
+  }
+  h1 { font-size: 22px; margin: 0; color: var(--flame); letter-spacing: .02em; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  button {
+    font: inherit; color: var(--text); background: var(--tile); border: 0;
+    border-radius: var(--radius); cursor: pointer; touch-action: manipulation;
+  }
+  button:active { background: var(--tile-press); }
+  button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+  svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  [hidden] { display: none !important; }
+
+  .tabs { display: flex; gap: 4px; background: var(--tile); padding: 4px; border-radius: 12px; }
+  .tabs button { padding: 6px 14px; border-radius: 9px; font-size: 14px; color: var(--muted); background: transparent; }
+  .tabs button[aria-selected="true"] { background: var(--tile-press); color: var(--text); }
+
+  .now { background: var(--tile); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; }
+  .now .state { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .now .title { font-size: 18px; margin: 2px 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .bar div { height: 100%; width: 0; background: var(--flame); }
+  .times { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+  .pad {
+    position: relative; width: min(100%, 300px); aspect-ratio: 1; margin: 0 auto 20px;
+    border-radius: 50%; background: var(--tile);
+  }
+  .pad button { position: absolute; background: transparent; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
+  .pad button:active { background: var(--tile-press); color: var(--text); }
+  .pad .up, .pad .down { left: 33%; width: 34%; height: 30%; }
+  .pad .up { top: 2%; } .pad .down { bottom: 2%; }
+  .pad .left, .pad .right { top: 33%; width: 30%; height: 34%; }
+  .pad .left { left: 2%; } .pad .right { right: 2%; }
+  .pad .ok {
+    left: 32%; top: 32%; width: 36%; height: 36%; background: var(--tile-press); color: var(--text);
+    font-weight: 600; letter-spacing: .05em;
+  }
+  .pad .ok:active { background: var(--flame); color: var(--bg); }
+  .pad svg { width: 30px; height: 30px; }
+
+  .row { display: grid; gap: 10px; margin-bottom: 10px; }
+  .row.two { grid-template-columns: 1fr 1fr; }
+  .row.five { grid-template-columns: repeat(5, 1fr); }
+  .row.three { grid-template-columns: repeat(3, 1fr); }
+  .row button { height: 56px; display: grid; place-items: center; gap: 2px; font-size: 14px; }
+  .row .label { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .row .main { background: var(--flame); color: var(--bg); }
+  .row .main:active { background: #d8912a; }
+
+  .crumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; min-height: 40px; }
+  .crumbs button { padding: 8px 12px; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+  .crumbs span { color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list { list-style: none; padding: 0; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--tile); }
+  .list li + li { border-top: 1px solid var(--line); }
+  .list button {
+    width: 100%; text-align: left; border-radius: 0; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px; background: transparent;
+  }
+  .list button:active { background: var(--tile-press); }
+  .list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list .meta { color: var(--muted); font-size: 13px; }
+  .list svg { width: 22px; height: 22px; color: var(--muted); flex: none; }
+  .list .folder svg { color: var(--flame); }
+  .empty { color: var(--muted); padding: 24px 4px; text-align: center; }
+
+  .pair { text-align: center; padding-top: 24px; }
+  .pair p { color: var(--muted); margin: 0 0 20px; }
+  .pair input {
+    font: 600 32px/1 ui-monospace, monospace; letter-spacing: .4em; text-align: center; width: 100%;
+    padding: 14px 0 14px .4em; margin: 16px 0; border-radius: var(--radius); border: 2px solid var(--line);
+    background: var(--tile); color: var(--text);
+  }
+  .pair input:focus { outline: none; border-color: var(--flame); }
+  .pair button { width: 100%; height: 56px; }
+  .pair .main { background: var(--flame); color: var(--bg); font-weight: 600; }
+
+  .toast {
+    position: fixed; left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); max-width: 448px; margin: 0 auto;
+    background: var(--text); color: var(--bg); padding: 12px 16px; border-radius: 12px; font-size: 14px;
+    opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Candle</h1>
+  <nav class="tabs" role="tablist" id="tabs" hidden>
+    <button role="tab" aria-selected="true" data-tab="remote">Remote</button>
+    <button role="tab" aria-selected="false" data-tab="library">Library</button>
+  </nav>
+</header>
+
+<section id="pairing" class="pair" hidden>
+  <p>Pair this phone with the projector once. A 4-digit PIN appears on the projector's screen.</p>
+  <button class="main" id="show-pin">Show PIN on the projector</button>
+  <form id="pin-form" hidden>
+    <input id="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="one-time-code" aria-label="PIN" placeholder="····">
+    <button class="main" type="submit">Pair</button>
+  </form>
+</section>
+
+<main id="app" hidden>
+  <section class="now" aria-live="polite">
+    <div class="state" id="np-state">Nothing playing</div>
+    <div class="title" id="np-title">&nbsp;</div>
+    <div class="bar"><div id="np-bar"></div></div>
+    <div class="times"><span id="np-pos">0:00</span><span id="np-dur">0:00</span></div>
+  </section>
+
+  <section id="remote">
+    <div class="pad">
+      <button class="up" data-key="up" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+      <button class="left" data-key="left" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="ok" data-key="ok">OK</button>
+      <button class="right" data-key="right" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="down" data-key="down" aria-label="Down"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
+    <div class="row two">
+      <button data-key="back"><span class="label"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg>Back</span></button>
+      <button data-cmd="home"><span class="label"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Home</span></button>
+    </div>
+    <div class="row five">
+      <button data-key="previous" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M18 18L9 12l9-6z"/><path d="M6 6v12"/></svg></button>
+      <button data-key="seek_back" aria-label="Back 10 seconds"><svg viewBox="0 0 24 24"><path d="M11 18l-7-6 7-6z"/><path d="M20 18l-7-6 7-6z"/></svg></button>
+      <button class="main" data-key="play_pause" aria-label="Play or pause"><svg viewBox="0 0 24 24"><path d="M6 5l8 7-8 7z"/><path d="M17 5v14"/><path d="M21 5v14"/></svg></button>
+      <button data-key="seek_forward" aria-label="Forward 10 seconds"><svg viewBox="0 0 24 24"><path d="M13 18l7-6-7-6z"/><path d="M4 18l7-6-7-6z"/></svg></button>
+      <button data-key="next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M6 18l9-6-9-6z"/><path d="M18 6v12"/></svg></button>
+    </div>
+    <div class="row three">
+      <button data-volume="down" aria-label="Volume down"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 12h4"/></svg></button>
+      <button data-volume="mute" aria-label="Mute"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l4 6"/><path d="M21 9l-4 6"/></svg></button>
+      <button data-volume="up" aria-label="Volume up"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 12h4"/><path d="M19 10v4"/></svg></button>
+    </div>
+  </section>
+
+  <section id="library" hidden>
+    <div class="crumbs">
+      <button id="up" hidden><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Up</button>
+      <span id="where">Sources</span>
+    </div>
+    <ul class="list" id="items"></ul>
+    <div class="empty" id="empty" hidden></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const ICONS = {
+  folder: '<svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></svg>',
+  video: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>',
+  audio: '<svg viewBox="0 0 24 24"><path d="M9 18V6l11-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  usb: '<svg viewBox="0 0 24 24"><rect x="7" y="9" width="10" height="12" rx="1"/><path d="M9 9V3h6v6"/></svg>',
+  smb: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1"/><rect x="3" y="13" width="18" height="7" rx="1"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
+  dlna: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/></svg>',
+};
+
+class Unpaired extends Error {}
+
+async function api(method, path, form) {
+  const options = { method, credentials: "same-origin" };
+  if (form) options.body = new URLSearchParams(form);
+  const response = await fetch(path, options);
+  const body = await response.json().catch(() => ({}));
+  if (response.status === 401) throw new Unpaired();
+  if (!response.ok) throw new Error(body.error || `Error ${response.status}`);
+  return body;
+}
+
+let toastTimer;
+function toast(text) {
+  const el = $("toast");
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+}
+
+function fail(error) {
+  if (error instanceof Unpaired) return showPairing();
+  toast(error.message === "Failed to fetch" ? "Cannot reach the projector" : error.message);
+}
+
+// ---- pairing
+function showPairing() {
+  $("app").hidden = true;
+  $("tabs").hidden = true;
+  $("pairing").hidden = false;
+  stopPolling();
+}
+
+function showApp() {
+  $("pairing").hidden = true;
+  $("app").hidden = false;
+  $("tabs").hidden = false;
+  startPolling();
+}
+
+$("show-pin").addEventListener("click", async () => {
+  try {
+    await api("POST", "/api/pair/start");
+    $("pin-form").hidden = false;
+    $("pin").value = "";
+    $("pin").focus();
+  } catch (e) { fail(e); }
+});
+
+$("pin-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await api("POST", "/api/pair", { pin: $("pin").value });
+    showApp();
+  } catch (e) {
+    toast(e.message);
+    $("pin").select();
+  }
+});
+
+// ---- remote buttons
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-key], button[data-volume], button[data-cmd]");
+  if (!button) return;
+  if (navigator.vibrate) navigator.vibrate(10);
+  const path = button.dataset.key ? `/api/key/${button.dataset.key}`
+    : button.dataset.volume ? `/api/volume/${button.dataset.volume}`
+    : `/api/${button.dataset.cmd}`;
+  api("POST", path).then(() => setTimeout(refreshNowPlaying, 300)).catch(fail);
+});
+
+// ---- tabs
+$("tabs").addEventListener("click", (event) => {
+  const tab = event.target.closest("[data-tab]");
+  if (!tab) return;
+  for (const b of $("tabs").querySelectorAll("[data-tab]")) b.setAttribute("aria-selected", String(b === tab));
+  $("remote").hidden = tab.dataset.tab !== "remote";
+  $("library").hidden = tab.dataset.tab !== "library";
+  if (tab.dataset.tab === "library" && !libraryLoaded) showSources();
+});
+
+// ---- now playing
+const clock = (ms) => {
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, sec = String(s % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
+};
+
+async function refreshNowPlaying() {
+  try {
+    const now = await api("GET", "/api/now-playing");
+    const idle = now.state === "idle";
+    $("np-state").textContent = idle ? "Nothing playing" : `${now.state === "playing" ? "Playing" : "Paused"} · ${now.kind}`;
+    $("np-title").textContent = idle ? " " : (now.title || "Untitled");
+    const duration = idle ? 0 : now.durationMs;
+    const position = idle ? 0 : now.positionMs;
+    $("np-pos").textContent = clock(position);
+    $("np-dur").textContent = duration ? clock(duration) : "–";
+    $("np-bar").style.width = duration ? `${Math.min(100, (100 * position) / duration)}%` : "0";
+  } catch (e) {
+    if (e instanceof Unpaired) showPairing();
+  }
+}
+
+let pollTimer = null;
+function startPolling() {
+  stopPolling();
+  refreshNowPlaying();
+  pollTimer = setInterval(refreshNowPlaying, 1000);
+}
+function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+document.addEventListener("visibilitychange", () => {
+  if ($("app").hidden) return;
+  if (document.visibilityState === "visible") startPolling(); else stopPolling();
+});
+
+// ---- library
+let libraryLoaded = false;
+let trail = []; // [{source, name, path}] folders entered, the first one a source root
+
+function renderList(rows, emptyText) {
+  const list = $("items");
+  list.replaceChildren(...rows.map((row) => {
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    if (row.folder) button.className = "folder";
+    button.innerHTML = row.icon;
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = row.name;
+    button.append(name);
+    if (row.meta) {
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = row.meta;
+      button.append(meta);
+    }
+    button.addEventListener("click", row.open);
+    li.append(button);
+    return li;
+  }));
+  $("empty").hidden = rows.length > 0;
+  $("empty").textContent = emptyText;
+}
+
+function setWhere(text) {
+  $("where").textContent = text;
+  $("up").hidden = trail.length === 0;
+}
+
+async function showSources() {
+  trail = [];
+  setWhere("Sources");
+  renderList([], "Looking for drives and servers…");
+  try {
+    const { sources } = await api("GET", "/api/sources");
+    libraryLoaded = true;
+    renderList(sources.map((s) => ({
+      name: s.name, meta: s.kind.toUpperCase(), icon: ICONS[s.kind] || ICONS.folder, folder: true,
+      open: () => { trail = [{ source: s.id, name: s.name, path: "" }]; showFolder(); },
+    })), "No USB drive or network server found");
+  } catch (e) { renderList([], "Cannot load the sources"); fail(e); }
+}
+
+async function showFolder() {
+  const here = trail[trail.length - 1];
+  setWhere(trail.map((t) => t.name).join(" / "));
+  renderList([], "Loading…");
+  try {
+    const { items } = await api("GET", `/api/browse?source=${encodeURIComponent(here.source)}&path=${encodeURIComponent(here.path)}`);
+    renderList(items.map((item) => ({
+      name: item.name,
+      meta: item.size != null && item.type !== "folder" ? size(item.size) : "",
+      icon: ICONS[item.type] || ICONS.video,
+      folder: item.type === "folder",
+      open: item.type === "folder"
+        ? () => { trail.push({ source: here.source, name: item.name, path: item.path }); showFolder(); }
+        : () => play(here.source, item),
+    })), "No videos or music here");
+  } catch (e) { renderList([], "Cannot read this folder"); fail(e); }
+}
+
+async function play(source, item) {
+  try {
+    await api("POST", "/api/play", { source, path: item.path, name: item.name, type: item.type });
+    toast(`Playing ${item.name}`);
+    setTimeout(refreshNowPlaying, 1500);
+  } catch (e) { fail(e); }
+}
+
+const size = (bytes) => {
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes, unit = 0;
+  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
+  return `${value >= 10 || unit === 0 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
+};
+
+$("up").addEventListener("click", () => {
+  trail.pop();
+  if (trail.length === 0) showSources(); else showFolder();
+});
+
+// Service workers exist only on secure origins; over plain http the page still works as before.
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+// ---- start: paired phones go straight to the remote
+api("GET", "/api/now-playing").then(showApp).catch((e) => (e instanceof Unpaired ? showPairing() : (showApp(), fail(e))));
+</script>
+</body>
+</html>

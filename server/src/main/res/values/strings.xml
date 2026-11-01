@@ -1,0 +1,33 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Candle Server</string>
+    <string name="server_on">Server on</string>
+    <string name="server_running">Open %1$s on any phone at home, or scan the code.</string>
+    <string name="server_no_network">Not connected to Wi-Fi.</string>
+    <string name="server_off">The server is off.</string>
+    <string name="players">Share with players on Wi-Fi</string>
+    <string name="players_hint">Lets Candle, VLC and smart TVs at home browse and play without a password.</string>
+    <string name="private_mode">Private web page</string>
+    <string name="private_on">Every phone needs the password, even to browse.</string>
+    <string name="private_off">Anyone on the home Wi-Fi can browse and download; uploading needs the password.</string>
+    <string name="no_password">No password yet: the page is open to the home Wi-Fi and uploads are off.</string>
+    <string name="set_password">Set a password</string>
+    <string name="change_password">Change the password</string>
+    <string name="password_hint" tools:ignore="PluralsCandidate">Password (at least %1$d characters)</string>
+    <string name="password_again">The same password again</string>
+    <string name="password_too_short" tools:ignore="PluralsCandidate">The password needs at least %1$d characters.</string>
+    <string name="password_mismatch">The two passwords are different.</string>
+    <string name="password_saved">Password saved. Every phone has to log in again.</string>
+    <string name="save">Save</string>
+    <string name="name_label">Name on the network</string>
+    <string name="folders_title">Shared folders</string>
+    <string name="folder_missing">%1$s (not found)</string>
+    <string name="about">About Candle Server</string>
+    <string name="first_run_title">Finish setting up</string>
+    <string name="files_access">Allow access to all files</string>
+    <string name="files_access_no_screen">This phone has no screen for it. Find Candle Server in Settings → Apps → Special access → All files access.</string>
+    <string name="files_access_hint">Needed to share documents such as PDFs.</string>
+    <string name="battery">Keep running in the background</string>
+    <string name="battery_hint">Stops Android from pausing the server while the screen is off.</string>
+    <string name="notification">Sharing at %1$s</string>
+    <string name="notification_no_network">Waiting for Wi-Fi</string>
+</resources>

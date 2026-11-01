@@ -1,0 +1,10 @@
+# Packages removed for user 0 by debloat.sh and brought back by restore.sh.
+# One package per line; text after '#' is ignored.
+com.mm.droid.livetv.tve                 # user-installed live-TV app; uninstall deletes it, restore cannot bring it back
+com.valor.mfc.droid.tvapp.generic       # user-installed live-TV app; uninstall deletes it, restore cannot bring it back
+com.uv.droid.uota                       # unknown vendor update service
+com.uv.droid.uotaback                   # unknown vendor update service
+com.softwinner.update                   # vendor firmware updater (JmUpdateService)
+com.google.android.tvrecommendations   # home-screen recommendations
+com.google.android.katniss              # Google Assistant / voice remote
+com.waxrain.airplaydmr2                 # AirPlay receiver

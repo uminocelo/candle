@@ -1,0 +1,20 @@
+# Gradle / Android build output
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Device backups (vendor APKs, not ours to publish)
+backup/
+
+# The adb serials of this machine's devices (see scripts/devices.example)
+scripts/devices.local

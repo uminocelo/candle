@@ -1,0 +1,7 @@
+# Phase 2, group D: removals the user decided on (2026-10-26 and 2026-10-28).
+# Format: package  # what it is; install location; PSS when audited; restore
+# Removed 2026-10-29; smoke check passed. Chromecast built-in (mediashell) is kept.
+com.amazon.avod.thirdpartyclient    # Prime Video; /product/app; not running; restorable
+com.softwinner.miracastReceiver     # Miracast screen mirroring (shared uid android.uid.system); /system/app; not running; restorable
+com.google.android.marvin.talkback  # TalkBack; updated system app (/data/app over /system/app/talkback); not running; restore brings back the /system version
+com.android.inputmethod.latin       # AOSP keyboard; /product/app; 15 MB PSS; restorable. It is the DEFAULT keyboard: switch to com.google.android.leanback.ime first

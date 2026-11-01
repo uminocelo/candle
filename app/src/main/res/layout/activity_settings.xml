@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:clipChildren="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/screen_padding_horizontal"
+        android:paddingTop="@dimen/screen_padding_vertical"
+        android:paddingEnd="@dimen/screen_padding_horizontal"
+        android:paddingBottom="@dimen/screen_padding_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/section_gap"
+            android:text="@string/tile_settings"
+            android:textColor="@color/flame"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            style="@style/SectionTitle"
+            android:text="@string/section_setup" />
+
+        <HorizontalScrollView style="@style/TileRow">
+
+            <LinearLayout
+                android:id="@+id/setup_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:clipChildren="false"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            style="@style/SectionTitle"
+            android:layout_marginTop="@dimen/section_gap"
+            android:text="@string/section_quick_settings" />
+
+        <TextView
+            android:id="@+id/grant_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="monospace"
+            android:textColor="@color/text_muted"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <HorizontalScrollView style="@style/TileRow">
+
+            <LinearLayout
+                android:id="@+id/settings_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:clipChildren="false"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            style="@style/SectionTitle"
+            android:layout_marginTop="@dimen/section_gap"
+            android:text="@string/remote_title" />
+
+        <!-- The QR code sits beside the tiles: below them it would scroll out of view. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clipChildren="false"
+                android:orientation="vertical">
+
+                <HorizontalScrollView style="@style/TileRow">
+
+                    <LinearLayout
+                        android:id="@+id/remote_row"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clipChildren="false"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+
+                <TextView
+                    android:id="@+id/remote_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/text_muted"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/remote_qr"
+                android:layout_width="@dimen/remote_qr"
+                android:layout_height="@dimen/remote_qr"
+                android:layout_marginStart="@dimen/section_gap"
+                android:contentDescription="@string/remote_qr"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionTitle"
+            android:layout_marginTop="@dimen/section_gap"
+            android:text="@string/section_screens" />
+
+        <HorizontalScrollView style="@style/TileRow">
+
+            <LinearLayout
+                android:id="@+id/screens_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            style="@style/SectionTitle"
+            android:layout_marginTop="@dimen/section_gap"
+            android:text="@string/section_device" />
+
+        <TextView
+            android:id="@+id/device_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="4dp"
+            android:textColor="@color/text"
+            android:textSize="16sp" />
+    </LinearLayout>
+</ScrollView>
